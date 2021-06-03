@@ -106,7 +106,7 @@ metadata:
 type: Opaque
 data:
   AZURE_BLOB_ACCOUNT_NAME: # <accountName, base64 encoded>
-  AZURE_BLOB_SAS_KEY: # <saskey, base64 encoded>
+  AZURE_BLOB_SAS_KEY:      # <saskey, base64 encoded>
 ---
 apiVersion: v1 
 kind: ConfigMap 
@@ -123,6 +123,13 @@ metadata:
   namespace: aks-periscope
 data:
   DIAGNOSTIC_KUBEOBJECTS_LIST: kube-system/pod kube-system/service kube-system/deployment
+
+  kubeobjects_to_collect: |
+    id: all-resources-table
+    kubeobject: all
+    selector: app.kubernetes.io/name=openservicemesh.io
+    output: wide
+    namespace: all
 ---
 apiVersion: v1 
 kind: ConfigMap 

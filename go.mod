@@ -12,4 +12,5 @@ require (
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/onsi/gomega v1.11.0
 	github.com/opencontainers/go-digest v1.0.0-rc1 // indirect
+	gopkg.in/yaml.v2 v2.4.0
 )
