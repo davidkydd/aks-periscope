@@ -129,9 +129,11 @@ func initializeComponents(creationTimeStamp string, hostname string) ([]interfac
 
 	//exporters
 	azureBlobExporter := exporter.NewAzureBlobExporter(creationTimeStamp, hostname)
+	localMachineExporter := exporter.NewLocalMachineExporter(hostname)
 	selectedExporters := selectExporters(
 		map[string]interfaces.Exporter{
-			azureBlobExporter.GetName(): azureBlobExporter,
+			azureBlobExporter.GetName():    azureBlobExporter,
+			localMachineExporter.GetName(): localMachineExporter,
 		})
 
 	return selectedCollectors, selectedDiagnosers, selectedExporters
