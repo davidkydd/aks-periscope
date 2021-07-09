@@ -22,11 +22,13 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to get creation timestamp: %v", err)
 	}
+	log.Print("Setting creation timestamp to %s", creationTimeStamp)
 
 	hostname, err := utils.GetHostName()
 	if err != nil {
 		log.Fatalf("Failed to get the hostname on which AKS Periscope is running: %v", err)
 	}
+	log.Print("Setting hostname to %s", hostname)
 
 	if err := utils.CreateCRD(); err != nil {
 		log.Fatalf("Failed to create CRD: %v", err)
@@ -213,7 +215,7 @@ func selectExporters(allExporters map[string]interfaces.Exporter) []interfaces.E
 	enabledExportersString, found := os.LookupEnv("ENABLED_EXPORTERS")
 	if !found {
 		//if not defined, default to all exporters enabled
-		enabledExportersString = "azureblob"
+		enabledExportersString = "azureblob localmachine"
 	}
 
 	enabledExporterNames := strings.Fields(enabledExportersString)
