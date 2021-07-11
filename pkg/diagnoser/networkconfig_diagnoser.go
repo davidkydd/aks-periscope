@@ -20,16 +20,18 @@ type networkConfigDiagnosticDatum struct {
 
 // NetworkConfigDiagnoser defines a NetworkConfig Diagnoser struct
 type NetworkConfigDiagnoser struct {
+	hostName string
 	dnsCollector        *collector.DNSCollector
 	kubeletCmdCollector *collector.KubeletCmdCollector
 	data                map[string]string
 }
 
 // NewNetworkConfigDiagnoser is a constructor
-func NewNetworkConfigDiagnoser(dnsCollector *collector.DNSCollector, kubeletCmdCollector *collector.KubeletCmdCollector) *NetworkConfigDiagnoser {
+func NewNetworkConfigDiagnoser(hostName string, dnsCollector *collector.DNSCollector, kubeletCmdCollector *collector.KubeletCmdCollector) *NetworkConfigDiagnoser {
 	return &NetworkConfigDiagnoser{
 		dnsCollector:        dnsCollector,
 		kubeletCmdCollector: kubeletCmdCollector,
+		hostName: 		     hostName,
 		data:                make(map[string]string),
 	}
 }
@@ -91,7 +93,7 @@ func (diagnoser *NetworkConfigDiagnoser) Diagnose() error {
 
 	diagnoser.data["networkconfig"] = string(dataBytes)
 
-	if err = utils.WriteToCRD(string(dataBytes), diagnoser.GetName()); err != nil {
+	if err = utils.WriteToCRD(dataBytes, diagnoser.GetName(), hostName); err != nil {
 		return fmt.Errorf("write data from NetworkConfig Diagnoser to CRD: %w", err)
 	}
 

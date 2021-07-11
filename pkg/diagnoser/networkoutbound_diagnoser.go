@@ -21,13 +21,15 @@ type networkOutboundDiagnosticDatum struct {
 
 // NetworkOutboundDiagnoser defines a NetworkOutbound Diagnoser struct
 type NetworkOutboundDiagnoser struct {
+	hostName 				 string
 	networkOutboundCollector *collector.NetworkOutboundCollector
 	data                     map[string]string
 }
 
 // NewNetworkOutboundDiagnoser is a constructor
-func NewNetworkOutboundDiagnoser(networkOutboundCollector *collector.NetworkOutboundCollector) *NetworkOutboundDiagnoser {
+func NewNetworkOutboundDiagnoser(hostName string, networkOutboundCollector *collector.NetworkOutboundCollector) *NetworkOutboundDiagnoser {
 	return &NetworkOutboundDiagnoser{
+		hostName: 		     hostName,
 		networkOutboundCollector: networkOutboundCollector,
 		data:                     make(map[string]string),
 	}
@@ -86,7 +88,7 @@ func (diagnoser *NetworkOutboundDiagnoser) Diagnose() error {
 
 	diagnoser.data["networkoutbound"] = string(dataBytes)
 
-	err = utils.WriteToCRD(string(dataBytes), diagnoser.GetName())
+	err = utils.WriteToCRD(dataBytes, diagnoser.GetName(), hostName)
 	if err != nil {
 		return fmt.Errorf("write data from NetworkOutbound Diagnoser to CRD: %w", err)
 	}
