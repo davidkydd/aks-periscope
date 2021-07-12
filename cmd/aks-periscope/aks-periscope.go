@@ -22,13 +22,13 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to get creation timestamp: %v", err)
 	}
-	log.Print("Setting creation timestamp to %s", creationTimeStamp)
+	log.Printf("Setting creation timestamp to %s", creationTimeStamp)
 
 	hostname, err := utils.GetHostName()
 	if err != nil {
 		log.Fatalf("Failed to get the hostname on which AKS Periscope is running: %v", err)
 	}
-	log.Print("Setting hostname to %s", hostname)
+	log.Printf("Setting hostname to %s", hostname)
 
 	if err := utils.CreateCRD(); err != nil {
 		log.Fatalf("Failed to create CRD: %v", err)
