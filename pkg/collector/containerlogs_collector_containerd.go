@@ -37,6 +37,9 @@ type ContainerLogSelector struct {
 	containerNamePrefix string
 }
 
+//special selector which indicates logs from containers in all namespaces should be selected for collection
+const allNamespacesSelector = "--all-namespaces"
+
 // NOTE pod log files not currently used are in sub-directories of /var/log/pods and have format NAMESPACE_PODNAME_SOMEGUIDMEANINGTBD/CONTAINERNAME/#.log,
 // where I assume # is incremented and a new log created for each container restart (starts at # == 0)
 const containerLogDirectory = "/var/log/containers"
@@ -85,6 +88,10 @@ func determineContainerLogsToCollect(allContainers []ContainerLog, selectors []C
 }
 
 func doesSelectorSelectContainerLog(containerLog ContainerLog, selector ContainerLogSelector) bool {
+	if selector.namespace == allNamespacesSelector {
+		return true
+	}
+
 	return containerLog.namespace == selector.namespace && strings.HasPrefix(containerLog.containerName, selector.containerNamePrefix)
 }
 
