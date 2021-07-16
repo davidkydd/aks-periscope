@@ -1,6 +1,7 @@
 package collector
 
 import (
+	"github.com/hashicorp/go-multierror"
 	"os"
 	"strings"
 
@@ -27,6 +28,7 @@ func (collector *KubeObjectsCollector) GetName() string {
 func (collector *KubeObjectsCollector) Collect() error {
 	kubernetesObjects := strings.Fields(os.Getenv("DIAGNOSTIC_KUBEOBJECTS_LIST"))
 
+	var result error
 	for _, kubernetesObject := range kubernetesObjects {
 		kubernetesObjectParts := strings.Split(kubernetesObject, "/")
 		nameSpace := kubernetesObjectParts[0]
@@ -39,24 +41,25 @@ func (collector *KubeObjectsCollector) Collect() error {
 		if len(objects) == 0 {
 			output, err := utils.RunCommandOnContainer("kubectl", "-n", nameSpace, "get", objectType, "--output=jsonpath={.items..metadata.name}")
 			if err != nil {
-				return err
+				result = multierror.Append(result, err)
+				continue
 			}
 
 			objects = strings.Split(output, " ")
 		}
 
 		for _, object := range objects {
-
 			output, err := utils.RunCommandOnContainer("kubectl", "-n", nameSpace, "describe", objectType, object)
 			if err != nil {
-				return err
+				result = multierror.Append(result, err)
+				continue
 			}
 
 			collector.data[nameSpace+"_"+objectType+"_"+object] = output
 		}
 	}
 
-	return nil
+	return result
 }
 
 func (collector *KubeObjectsCollector) GetData() map[string]string {
