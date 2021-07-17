@@ -77,7 +77,7 @@ spec:
         beta.kubernetes.io/os: linux
       containers:
       - name: aks-periscope
-        image: dakyddacr.azurecr.io/periscope/arc:v5
+        image: dakyddacr.azurecr.io/periscope/arc:v6
         securityContext:
           privileged: true
         imagePullPolicy: Always
