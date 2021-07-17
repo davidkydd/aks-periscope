@@ -1,11 +1,12 @@
 package collector
 
 import (
+	"errors"
+	"fmt"
+	"github.com/Azure/aks-periscope/pkg/utils"
 	"github.com/hashicorp/go-multierror"
 	"os"
 	"strings"
-
-	"github.com/Azure/aks-periscope/pkg/utils"
 )
 
 // KubeObjectsCollector defines a KubeObjects Collector struct
@@ -41,7 +42,8 @@ func (collector *KubeObjectsCollector) Collect() error {
 		if len(objects) == 0 {
 			output, err := utils.RunCommandOnContainer("kubectl", "-n", nameSpace, "get", objectType, "--output=jsonpath={.items..metadata.name}")
 			if err != nil {
-				result = multierror.Append(result, err)
+				errFormatted := errors.New(fmt.Sprintf("nameSpace: %v, objectType: %v, %v", nameSpace, objectType, err.Error()))
+				result = multierror.Append(result, errFormatted)
 				continue
 			}
 
@@ -51,7 +53,8 @@ func (collector *KubeObjectsCollector) Collect() error {
 		for _, object := range objects {
 			output, err := utils.RunCommandOnContainer("kubectl", "-n", nameSpace, "describe", objectType, object)
 			if err != nil {
-				result = multierror.Append(result, err)
+				errFormatted := errors.New(fmt.Sprintf("nameSpace: %v, objectType: %v, object: %v, %v", nameSpace, objectType, object, err.Error()))
+				result = multierror.Append(result, errFormatted)
 				continue
 			}
 

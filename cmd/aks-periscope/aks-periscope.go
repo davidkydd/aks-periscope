@@ -237,8 +237,7 @@ func runCollectors(collectors []interfaces.Collector, exporters []interfaces.Exp
 			log.Printf("Collector: %s, collect data", c.GetName())
 			err := c.Collect()
 			if err != nil {
-				log.Printf("Collector: %s, collect data failed: %v", c.GetName(), err)
-				return
+				log.Printf("Collector: %s, collect data encountered errors: %v", c.GetName(), err)
 			}
 
 			log.Printf("Collector: %s, export data", c.GetName())
