@@ -102,6 +102,7 @@ func initializeComponents(creationTimeStamp string, hostname string) ([]interfac
 	systemPerfCollector := collector.NewSystemPerfCollector()
 	helmCollector := collector.NewHelmCollector()
 	osmCollector := collector.NewOsmCollector()
+	smiCollector := collector.NewSmiCollector()
 
 	selectedCollectors := selectCollectors(
 		map[string]interfaces.Collector{
@@ -117,6 +118,7 @@ func initializeComponents(creationTimeStamp string, hostname string) ([]interfac
 			systemPerfCollector.GetName():              systemPerfCollector,
 			helmCollector.GetName():                    helmCollector,
 			osmCollector.GetName():                     osmCollector,
+			smiCollector.GetName():                     smiCollector,
 		})
 
 	//diagnosers
@@ -179,9 +181,12 @@ func selectCollectorsUsingCollectorList(collectorList []string) []string {
 		enabledCollectorNames = append(enabledCollectorNames,
 			"iptables", "kubeletcmd", "nodelogs", "systemlogs", "systemperf")
 	}
+	// OSM and SMI flags are mutually exclusive
 	if utils.Contains(collectorList, "OSM") {
-		//select OSM collectors
 		enabledCollectorNames = append(enabledCollectorNames, "osm")
+		enabledCollectorNames = append(enabledCollectorNames, "smi")
+	} else if utils.Contains(collectorList, "SMI") {
+		enabledCollectorNames = append(enabledCollectorNames, "smi")
 	}
 
 	return enabledCollectorNames
