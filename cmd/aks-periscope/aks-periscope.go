@@ -100,9 +100,11 @@ func run(osIdentifier utils.OSIdentifier, knownFilePaths *utils.KnownFilePaths, 
 		collector.NewWindowsLogsCollector(osIdentifier, runtimeInfo, knownFilePaths, fileSystem, 10*time.Second, 20*time.Minute),
 	}
 
-	collectorGrp := new(sync.WaitGroup)
+	//collectorGrp := new(sync.WaitGroup)
 
 	dataProducers := []interfaces.DataProducer{}
+
+	/* don't run collectors directly anymore
 	for _, c := range collectors {
 		if err := c.CheckSupported(); err != nil {
 			// Log the reason why this collector is not supported, and skip to the next
@@ -129,7 +131,7 @@ func run(osIdentifier utils.OSIdentifier, knownFilePaths *utils.KnownFilePaths, 
 		}(c)
 	}
 
-	collectorGrp.Wait()
+	collectorGrp.Wait()*/
 
 	diagnosers := []interfaces.Diagnoser{
 		diagnoser.NewNetworkConfigDiagnoser(runtimeInfo, dnsCollector, kubeletCmdCollector),
@@ -145,7 +147,7 @@ func run(osIdentifier utils.OSIdentifier, knownFilePaths *utils.KnownFilePaths, 
 			defer diagnoserGrp.Done()
 
 			log.Printf("Diagnoser: %s, diagnose data", d.GetName())
-			err := d.Diagnose()
+			diagnosers, err := d.Diagnose()
 			if err != nil {
 				log.Printf("Diagnoser: %s, diagnose data failed: %v", d.GetName(), err)
 				return
@@ -170,4 +172,23 @@ func run(osIdentifier utils.OSIdentifier, knownFilePaths *utils.KnownFilePaths, 
 	}
 
 	return nil
+}
+
+func runDiagnoser(diagnoser interfaces.Diagnoser) ([]interfaces.Collector, []interfaces.Diagnoser) {
+
+	//DataStructure changes:
+	//We need to introduce a new struct representing a "signal" coming back from a collector / diagnoser.
+	//
+	//
+	//that includes the name of the collector / diagnoser + the params to run it with
+	//then we maintain a single map of "executable" IDs to the collector / diagnoser object they should run so we can look them up.
+
+	//Logical changes:
+	//call runDiagnoser / runCollector in a loop, collecting the followupCollectors / followupDiagnosers that are returned in an aggregated collection
+	//before executing these in the next pass through the loop, until we run out of returned collectors / detectors.
+	//Each pass through the loop will correspond to an additional level of "depth" in the diagnostic tree, e.g. breadth first execution.
+
+	//Need to include a max depth to make sure it doesn't run forever
+
+	followupCollectors, followupDiagnosers, err := diagnoser.Diagnose() //we need to add an API like the below
 }
