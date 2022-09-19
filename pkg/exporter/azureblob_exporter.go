@@ -38,6 +38,10 @@ func NewAzureBlobExporter(runtimeInfo *utils.RuntimeInfo, knownFilePaths *utils.
 	}
 }
 
+func (exporter *AzureBlobExporter) GetName() string {
+	return "azureblob"
+}
+
 func createContainerURL(runtimeInfo *utils.RuntimeInfo, knownFilePaths *utils.KnownFilePaths) (azblob.ContainerURL, error) {
 	if runtimeInfo.StorageAccountName == "" || runtimeInfo.StorageSasKey == "" || runtimeInfo.StorageContainerName == "" {
 		log.Print("Storage Account information were not provided. Export to Azure Storage Account will be skipped.")

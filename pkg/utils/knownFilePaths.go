@@ -22,12 +22,13 @@ type ConfigKey string
 type SecretKey string
 
 const (
-	CollectorListKey     ConfigKey = "COLLECTOR_LIST"
-	ContainerLogsListKey ConfigKey = "DIAGNOSTIC_CONTAINERLOGS_LIST"
-	KubeObjectsListKey   ConfigKey = "DIAGNOSTIC_KUBEOBJECTS_LIST"
-	NodeLogsLinuxKey     ConfigKey = "DIAGNOSTIC_NODELOGS_LIST_LINUX"
-	NodeLogsWindowsKey   ConfigKey = "DIAGNOSTIC_NODELOGS_LIST_WINDOWS"
-	RunIdKey             ConfigKey = "DIAGNOSTIC_RUN_ID"
+	CollectorListKey      ConfigKey = "COLLECTOR_LIST"
+	ContainerLogsListKey  ConfigKey = "DIAGNOSTIC_CONTAINERLOGS_LIST"
+	EntryInvestigationKey ConfigKey = "ENTRY_INVESTIGATION_KEY"
+	KubeObjectsListKey    ConfigKey = "DIAGNOSTIC_KUBEOBJECTS_LIST"
+	NodeLogsLinuxKey      ConfigKey = "DIAGNOSTIC_NODELOGS_LIST_LINUX"
+	NodeLogsWindowsKey    ConfigKey = "DIAGNOSTIC_NODELOGS_LIST_WINDOWS"
+	RunIdKey              ConfigKey = "DIAGNOSTIC_RUN_ID"
 )
 
 const (

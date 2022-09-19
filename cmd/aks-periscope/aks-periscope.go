@@ -70,8 +70,6 @@ func run(osIdentifier utils.OSIdentifier, knownFilePaths *utils.KnownFilePaths, 
 		return fmt.Errorf("cannot load kubeconfig: %w", err)
 	}
 
-	exp := exporter.NewAzureBlobExporter(runtimeInfo, knownFilePaths, runtimeInfo.RunId)
-
 	// Copies self-signed cert information to container if application is running on Azure Stack Cloud.
 	// We need the cert in order to communicate with the storage account.
 	if utils.IsAzureStackCloud(knownFilePaths) {
@@ -80,27 +78,8 @@ func run(osIdentifier utils.OSIdentifier, knownFilePaths *utils.KnownFilePaths, 
 		}
 	}
 
-	dnsCollector := collector.NewDNSCollector(osIdentifier, knownFilePaths, fileSystem)
-	kubeletCmdCollector := collector.NewKubeletCmdCollector(osIdentifier, runtimeInfo)
-	networkOutboundCollector := collector.NewNetworkOutboundCollector()
-	collectors := []interfaces.Collector{
-		dnsCollector,
-		kubeletCmdCollector,
-		networkOutboundCollector,
-		collector.NewHelmCollector(config, runtimeInfo),
-		collector.NewIPTablesCollector(osIdentifier, runtimeInfo),
-		collector.NewKubeObjectsCollector(config, runtimeInfo),
-		collector.NewNodeLogsCollector(runtimeInfo, fileSystem),
-		collector.NewOsmCollector(config, runtimeInfo),
-		collector.NewPDBCollector(config, runtimeInfo),
-		collector.NewPodsContainerLogsCollector(config, runtimeInfo),
-		collector.NewSmiCollector(config, runtimeInfo),
-		collector.NewSystemLogsCollector(osIdentifier, runtimeInfo),
-		collector.NewSystemPerfCollector(config, runtimeInfo),
-		collector.NewWindowsLogsCollector(osIdentifier, runtimeInfo, knownFilePaths, fileSystem, 10*time.Second, 20*time.Minute),
-	}
-
 	//collectorGrp := new(sync.WaitGroup)
+	collectorMap, diagnoserMap, exporterMap := initializeComponents(osIdentifier, knownFilePaths, fileSystem, config, runtimeInfo)
 
 	dataProducers := []interfaces.DataProducer{}
 
@@ -178,8 +157,6 @@ func runDiagnoser(diagnoser interfaces.Diagnoser) ([]interfaces.Collector, []int
 
 	//DataStructure changes:
 	//We need to introduce a new struct representing a "signal" coming back from a collector / diagnoser.
-	//
-	//
 	//that includes the name of the collector / diagnoser + the params to run it with
 	//then we maintain a single map of "executable" IDs to the collector / diagnoser object they should run so we can look them up.
 
@@ -190,5 +167,78 @@ func runDiagnoser(diagnoser interfaces.Diagnoser) ([]interfaces.Collector, []int
 
 	//Need to include a max depth to make sure it doesn't run forever
 
-	followupCollectors, followupDiagnosers, err := diagnoser.Diagnose() //we need to add an API like the below
+	//followupCollectors, followupDiagnosers, err := diagnoser.Diagnose() //we need to add an API like the below
 }
+
+// initializeComponents initializes and returns collectors, diagnosers and exporters
+func initializeComponents(
+	osIdentifier utils.OSIdentifier,
+	knownFilePaths *utils.KnownFilePaths,
+	fileSystem interfaces.FileSystemAccessor,
+	config *restclient.Config,
+	runtimeInfo *utils.RuntimeInfo) (map[string]interfaces.Collector, map[string]interfaces.Diagnoser, map[string]interfaces.Exporter) {
+
+	// exporters
+	azureBlobExporter := exporter.NewAzureBlobExporter(runtimeInfo, knownFilePaths, runtimeInfo.RunId)
+	exporters := map[string]interfaces.Exporter{
+		azureBlobExporter.GetName(): azureBlobExporter,
+	}
+
+	// collectors
+	dnsCollector := collector.NewDNSCollector(osIdentifier, knownFilePaths, fileSystem)
+	helmCollector := collector.NewHelmCollector(config, runtimeInfo)
+	ipTablesCollector := collector.NewIPTablesCollector(osIdentifier, runtimeInfo)
+	kubeletCmdCollector := collector.NewKubeletCmdCollector(osIdentifier, runtimeInfo)
+	kubeObjectsCollector := collector.NewKubeObjectsCollector(config, runtimeInfo)
+	networkOutboundCollector := collector.NewNetworkOutboundCollector()
+	nodeLogsCollector := collector.NewNodeLogsCollector(runtimeInfo, fileSystem)
+	osmCollector := collector.NewOsmCollector(config, runtimeInfo)
+	pdbCollector := collector.NewPDBCollector(config, runtimeInfo)
+	podsContainerLogsCollector := collector.NewPodsContainerLogsCollector(config, runtimeInfo)
+	smiCollector := collector.NewSmiCollector(config, runtimeInfo)
+	systemLogsCollector := collector.NewSystemLogsCollector(osIdentifier, runtimeInfo)
+	systemPerfCollector := collector.NewSystemPerfCollector(config, runtimeInfo)
+	windowsLogsCollector := collector.NewWindowsLogsCollector(osIdentifier, runtimeInfo, knownFilePaths, fileSystem, 10*time.Second, 20*time.Minute)
+
+	collectors := map[string]interfaces.Collector{
+		dnsCollector.GetName():               dnsCollector,
+		helmCollector.GetName():              helmCollector,
+		ipTablesCollector.GetName():          ipTablesCollector,
+		kubeletCmdCollector.GetName():        kubeletCmdCollector,
+		kubeObjectsCollector.GetName():       kubeObjectsCollector,
+		networkOutboundCollector.GetName():   networkOutboundCollector,
+		nodeLogsCollector.GetName():          nodeLogsCollector,
+		osmCollector.GetName():               osmCollector,
+		pdbCollector.GetName():               pdbCollector,
+		podsContainerLogsCollector.GetName(): podsContainerLogsCollector,
+		smiCollector.GetName():               smiCollector,
+		systemLogsCollector.GetName():        systemLogsCollector,
+		systemPerfCollector.GetName():        systemPerfCollector,
+		windowsLogsCollector.GetName():       windowsLogsCollector,
+	}
+
+	//diagnosers
+	networkConfigDiagnoser := diagnoser.NewNetworkConfigDiagnoser(runtimeInfo, dnsCollector, kubeletCmdCollector)
+	networkOutboundDiagnoser := diagnoser.NewNetworkOutboundDiagnoser(runtimeInfo, networkOutboundCollector)
+
+	diagnosers := map[string]interfaces.Diagnoser{
+		networkConfigDiagnoser.GetName():   networkConfigDiagnoser,
+		networkOutboundDiagnoser.GetName(): networkOutboundDiagnoser,
+	}
+
+	return collectors, diagnosers, exporters
+}
+
+// selectedExporters select the exporters to run
+// func selectExporters(allExporters map[string]interfaces.Exporter) []interfaces.Exporter {
+// 	exporters := []interfaces.Exporter{}
+
+// 	//read list of collectors that are enabled
+// 	enabledExporterNames := strings.Fields(os.Getenv("ENABLED_EXPORTERS"))
+
+// 	for _, exporter := range enabledExporterNames {
+// 		exporters = append(exporters, allExporters[exporter])
+// 	}
+
+// 	return exporters
+// }
